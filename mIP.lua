@@ -179,6 +179,9 @@ function mIP.onPacketReceive(address, packet)
 		end
 	end
 
+	-- Adding or refreshing a mARP table record
+	mARP.addTableEntry(packet[2], address)
+
 	--require("OCNS").utils.writeDelayToFile("/home/debug.log", "mIP.onPacketReceive")
 	require("OCNS").decapsulateToTransport(packet[1], mIP, packet[3], ser.unserialize(packet[4]))
 end
