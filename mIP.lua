@@ -3,8 +3,8 @@ local modem = require("component").modem
 local ser = require("serialization")
 local event = require("event")
 
--- mARP v1
--- Basic implementation of network layer protocol, supports PC labeling with 3-octet 24-bit addresses 
+-- mIP v1
+-- Basic implementation of network layer protocol, supports PC labeling with 3-octet 24-bit addresses
 -- Currently have nothing but labeling PCs and sending packets in one Ethernet with resolving names via mARP
 --
 -- Packets structure:
@@ -22,6 +22,8 @@ local mIP = {
 	-- Protocol header version. Is used in packet header
 	headerVersion = 1
 }
+
+mIP.listeners = {}
 
 -- Function formPacket
 -- Makes a mIP packet, ready to be transferred via modem.send
@@ -49,7 +51,7 @@ function mIP.prettifyAddress(bakedAddress)
 	address = "" .. bit.rshift(bakedAddress, 16)
 	address = address .. "." .. bit.rshift(bit.lshift(bakedAddress, 16), 24)
 	address = address .. "." .. bit.rshift(bit.lshift(bakedAddress, 24), 24)
-	
+
 	return address
 end
 
@@ -62,13 +64,13 @@ end
 -- Returns
 -- Baked address (number) - address, that could be used in other driver metods
 -- ==
--- Throws an error: 
+-- Throws an error:
 -- When address is invalid
 function mIP.bakeAddress(rawAddress)
 	if not (rawAddress == nil or mIP.isValidAddress(rawAddress)) then
 		error("Invalid address!")
 	end
-	
+
 	-- Enumirating our octets, we are doing few things:
 	-- 1) Checking if octet is representing a valid 8-bit number (it should not be bigger than 255 in decimal form)
 	-- 2) Caclulating a number-form address by translating octets into numbers and summing them with left-shift
@@ -82,7 +84,7 @@ function mIP.bakeAddress(rawAddress)
 	-- 2 octet: 255 = 1111111 in binary
 	-- Without shifting, we get 0000000.0000000.11111111 (points are put just for clarity)
 	-- Summing these three values we get our address in binary form - 11111111.01111111.11111111 or 16744447 in decimal
-	
+
 	-- This value represents our shift degree
 	degree = 16
 	-- Our value to be returned
@@ -91,12 +93,12 @@ function mIP.bakeAddress(rawAddress)
 		octet = tonumber(S)
 		if octet > 255 then
 			error("Invalid address!")
-		end	
-		
+		end
+
 		address = address + bit.lshift(octet, degree)
 		degree = degree - 8
 	end
-	
+
 	return address
 end
 
@@ -118,7 +120,7 @@ end
 -- Arguments:
 -- address (string OR number) - address you want to set
 -- ==
--- Throws an error: 
+-- Throws an error:
 -- When address is invalid
 function mIP.changeAddress(address)
 	if type(address) == "string" then
@@ -136,13 +138,13 @@ end
 -- Arguments:
 -- destinationAddress (mIP address) - address to deliver payload
 -- payload (table) - data to send
--- version (number) - header version of a higher level protocol 
+-- version (number) - header version of a higher level protocol
 -- Returns:
 -- string - error message or nil if success
 function mIP.sendPacket(destinationAddress, version, payload)
 	-- We get a destination address with mARP. 'true' argument lets the protocol to send a request if address is not represented in the table
 	destinationPhysical = require("OCNS").mARP.getTableEntry(destinationAddress, true)
-	
+
 	-- If destinationPhysical == nil (mARP request failed) we should send an error message
 	if not destinationPhysical then
 		return "Address is unreachable"
@@ -152,7 +154,7 @@ function mIP.sendPacket(destinationAddress, version, payload)
 	return nil
 end
 
--- Function onPacketReceive  
+-- Function onPacketReceive
 -- It's required function for every protocol object
 -- In case of network layer protocols, function's called from network driver (98_network.lua in /boot)
 -- ===
@@ -161,19 +163,43 @@ end
 -- packet (table) - unserialized packet
 function mIP.onPacketReceive(address, packet)
 	-- Packet contents:
-	-- packet[1] - source mIP
-	-- packet[2] - destination mIP
+	-- packet[1] - source mIP (remote address)
+	-- packet[2] - destination mIP (local address)
 	-- packet[3] - transport layer protocol header version
 	-- packet[4] - serialized payload
-	
+
 	-- Just a normal one event to help normal ones to use a network without that imposed by stupid developer nerdy crap like "protocols" and other shit
 	-- Is only called if normal ones used 0 as header version
 	if packet[3] == 0 then
-		event.push("mip_message", packet[1], packet[4])
+		event.push("mip_message", packet[1], packet[2], ser.unserialize(packet[4]))
+
+		-- Calling all of registerd listeners
+		for i = 1, #mIP.listeners do
+			mIP.listeners[i](packet[1], packet[2], ser.unserialize(packet[4]))
+		end
 	end
-	
+
+	-- Adding or refreshing a mARP table record
+	require("OCNS").mARP.addTableEntry(packet[1], address)
+
 	--require("OCNS").utils.writeDelayToFile("/home/debug.log", "mIP.onPacketReceive")
 	require("OCNS").decapsulateToTransport(packet[1], mIP, packet[3], ser.unserialize(packet[4]))
+end
+
+-- Function attachListener
+-- Adds a function that will be triggered when mIP message arrives
+-- ===
+-- Arguments:
+-- listenter (function) - listener itself. Is called with arguments "localAddress", "remoteAddress", "payload",.
+function mIP.attachListener(listener)
+	if not mIP.listeners then mIP.listeners = {} end
+	table.insert(mIP.listeners, listener)
+end
+
+-- Function detachListeners
+-- Removes listeners from the system
+function mIP.detachListeners()
+	mIP.listeners = {}
 end
 
 -- This table contains your client settings, such as address, mask, default gateway and others

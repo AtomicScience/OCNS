@@ -20,7 +20,7 @@ OCNS.pingStub = require("OCNS.pingStub")
 OCNS.mNSP = require("OCNS.mNSP")
 
 OCNS.networkProtocols = {OCNS.mIP, OCNS.mARP}
-OCNS.transportProtocols = {OCNS.pingStub, OCNS.mUDP}
+OCNS.transportProtocols = {OCNS.mUDP}
 OCNS.sessionProtocols = {OCNS.mNSP}
 
 -- Function decapsulateToNetworkLayer (yes, I'm the fan of long method names)
