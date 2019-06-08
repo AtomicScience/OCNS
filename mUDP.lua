@@ -20,7 +20,7 @@ function mUDP.formPacket(sourcePort, destinationPort, version, data)
 	return 4, {sourcePort, destinationPort, version, data}
 end
 
--- Function sendPacket  
+-- Function sendPacket
 -- Sends a packet
 -- ===
 -- Arguments:
@@ -32,7 +32,7 @@ function mUDP.sendPacket(address, sourcePort, destinationPort, version, data)
 	require("OCNS").mIP.sendPacket(address, mUDP.formPacket(sourcePort, destinationPort, version, ser.serialize(data)))
 end
 
--- Function openPort  
+-- Function openPort
 -- Starts handling a specified port
 -- ===
 -- Arguments:
@@ -49,7 +49,7 @@ function mUDP.openPort(port)
 	end
 end
 
--- Function closePort  
+-- Function closePort
 -- Stops handling a specified port
 -- ===
 -- Arguments:
@@ -66,7 +66,7 @@ function mUDP.closePort(port)
 	end
 end
 
--- Function onPacketReceive  
+-- Function onPacketReceive
 -- It's required function for every protocol object
 -- In case of transport layer protocols, function's called from onPacketReceive of network layer
 -- ===
@@ -75,23 +75,31 @@ end
 -- lowerProtocol - an object of the protocol that have received the packet
 -- packet (table) - unserialized packet
 function mUDP.onPacketReceive(address, lowerProtocol, packet)
+	-- Packet contents:
+	-- packet[1] - source port (port of the remote machine)
+	-- packet[2] - destination port (port of the local machine)
+	-- packet[3] - session layer protocol header version
+	-- packet[4] - serialized payload
+
 	-- We should proceed only if 'destination port' is open
 	if mUDP.handlingPorts[packet[2]] then
 		require("OCNS").decapsulateToSession(address, packet[1], packet[2], packet[3], packet[4])
-		
+
 		-- Calling listener functions
 		listeners = mUDP.listeners[packet[2]]
 		if listeners then
 			for i = 1, #listeners do
 				listeners[i](address, packet[4], packet[2], packet[3])
 			end
-		end 
-		
-		-- Invoking an "mudp_message" event
-		event.push("mudp_message", address, packet[4], packet[2], packet[3])
+		end
+
+		-- Invoking an "mudp_message" event, but only if session protocol version is 0
+		if packet[3] == 0 then
+			event.push("mudp_message", address, packet[4], packet[2], ser.unserialize(packet[3]))
+		end
 	end
-	
-	-- 8 port is ping port
+
+	-- 8 port is ping port, so we have to reply with data received
 	if packet[2] == 8 then
 		mUDP.sendPacket(address, 8, packet[1], packet[3], packet[4])
 	end
