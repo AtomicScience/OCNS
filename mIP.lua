@@ -163,8 +163,8 @@ end
 -- packet (table) - unserialized packet
 function mIP.onPacketReceive(address, packet)
 	-- Packet contents:
-	-- packet[1] - source mIP (local address)
-	-- packet[2] - destination mIP (remote address)
+	-- packet[1] - source mIP (remote address)
+	-- packet[2] - destination mIP (local address)
 	-- packet[3] - transport layer protocol header version
 	-- packet[4] - serialized payload
 
@@ -180,7 +180,7 @@ function mIP.onPacketReceive(address, packet)
 	end
 
 	-- Adding or refreshing a mARP table record
-	mARP.addTableEntry(packet[2], address)
+	require("OCNS").mARP.addTableEntry(packet[1], address)
 
 	--require("OCNS").utils.writeDelayToFile("/home/debug.log", "mIP.onPacketReceive")
 	require("OCNS").decapsulateToTransport(packet[1], mIP, packet[3], ser.unserialize(packet[4]))
