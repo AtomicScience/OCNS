@@ -5,7 +5,7 @@ local ser = require("serialization")
 -- TCP/IP stack. To avoid confusion, all protocols have 'm' in their names (e.g. IP -> mIP)
 -- ==
 -- Implemented protocols:
--- mIPv1 - basic implementation of IP protocol, supports PC naming with 3-octet 24-bit addresses 
+-- mIPv1 - basic implementation of IP protocol, supports PC naming with 3-octet 24-bit addresses
 -- Currently have nothing but labeling PCs and sending packets in one Ethernet
 -- mARPv1 - ARP-like protocol for OCNS networks
 -- pingStub - simple layer 4 protocol designed to test networks in a very simple way
@@ -30,7 +30,6 @@ OCNS.sessionProtocols = {OCNS.mNSP}
 -- Many-many-many arguments that are passed directly from "modem_message" event
 function OCNS.decapsulateToNetworkLayer(_, localInterface, senderInterface, port, _, version, payload)
 	--OCNS.utils.writeDelayToFile("/home/debug.log", "-----------------")
-	
 	for i = 1, #OCNS.networkProtocols do
 		protocol = OCNS.networkProtocols[i]
 		if version == protocol.headerVersion then
@@ -48,7 +47,7 @@ end
 -- lowerProtocol - protocol driver object which received the frame
 -- version, payload - got directly from network layer package payload
 function OCNS.decapsulateToTransport(senderAddress, lowerProtocol, version, payload)
-	for i = 1, #OCNS.transportProtocols do
+	gtrfor i = 1, #OCNS.transportProtocols do
 		protocol = OCNS.transportProtocols[i]
 		if version == protocol.headerVersion then
 			--OCNS.utils.writeDelayToFile("/home/debug.log", "decapsulateToTransportLayer")
