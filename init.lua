@@ -16,24 +16,39 @@ OCNS.utils = require("OCNS.utils")
 OCNS.mIP = require("OCNS.mIP")
 OCNS.mUDP = require("OCNS.mUDP")
 OCNS.mARP = require("OCNS.mARP")
-OCNS.pingStub = require("OCNS.pingStub")
 OCNS.mNSP = require("OCNS.mNSP")
+OCNS.mDIX = require("OCNS.mDIX")
 
+OCNS.dataLinkProtocols = {OCNS.mDIX}
 OCNS.networkProtocols = {OCNS.mIP, OCNS.mARP}
 OCNS.transportProtocols = {OCNS.mUDP}
 OCNS.sessionProtocols = {OCNS.mNSP}
 
+-- Function decapsulateToDataLink (yes, I'm the fan of long method names)
+-- Is called when interface receives a message
+-- ===
+-- Arguments:
+-- interface (object) - interface itself
+-- nodeInterface (MAC) - address of the modem that sent the message
+-- version - packet version
+-- payload - unserialized message paylaod
+function OCNS.decapsulateToDataLink(interface, switchInteface,  version, payload)
+	for i = 1, #OCNS.dataLinkProtocols do
+		protocol = OCNS.dataLinkProtocols[i]
+		if version == protocol.headerVersion then
+			protocol.onPacketReceive(senderInterface, switchInteface, ser.unserialize(payload))
+		end
+	end
+end
 -- Function decapsulateToNetworkLayer (yes, I'm the fan of long method names)
--- Is called when "modem_message" is triggered. Detects a network protocol and calls "onPacketReceive" method of it
+-- Is called from data link layer
 -- ===
 -- Arguments:
 -- Many-many-many arguments that are passed directly from "modem_message" event
 function OCNS.decapsulateToNetworkLayer(_, localInterface, senderInterface, port, _, version, payload)
-	--OCNS.utils.writeDelayToFile("/home/debug.log", "-----------------")
 	for i = 1, #OCNS.networkProtocols do
 		protocol = OCNS.networkProtocols[i]
 		if version == protocol.headerVersion then
-			-- OCNS.utils.writeDelayToFile("/home/debug.log", "decapsulateToNetworkLayer")
 			protocol.onPacketReceive(senderInterface, ser.unserialize(payload))
 		end
 	end
@@ -47,10 +62,9 @@ end
 -- lowerProtocol - protocol driver object which received the frame
 -- version, payload - got directly from network layer package payload
 function OCNS.decapsulateToTransport(senderAddress, lowerProtocol, version, payload)
-	gtrfor i = 1, #OCNS.transportProtocols do
+	for i = 1, #OCNS.transportProtocols do
 		protocol = OCNS.transportProtocols[i]
 		if version == protocol.headerVersion then
-			--OCNS.utils.writeDelayToFile("/home/debug.log", "decapsulateToTransportLayer")
 			protocol.onPacketReceive(senderAddress, lowerProtocol, ser.unserialize(payload))
 		end
 	end
@@ -68,7 +82,6 @@ function OCNS.decapsulateToSession(senderAddress, remotePort, port, version, pay
 	for i = 1, #OCNS.sessionProtocols do
 		protocol = OCNS.sessionProtocols[i]
 		if version == protocol.headerVersion then
-			--OCNS.utils.writeDelayToFile("/home/debug.log", "decapsulateToTransportLayer")
 			protocol.onPacketReceive(senderAddress, port, remotePort, ser.unserialize(payload))
 		end
 	end
