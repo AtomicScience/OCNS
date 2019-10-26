@@ -65,7 +65,6 @@ end
 function mARP.sendRequest(address)
 	-- Broadcasting an mARP request
 	modem.broadcast(13, 2, ser.serialize(mARP.formRequestPacket(address)))
-
 	-- Avaiting for respond paying attention to request timeout
 	-- Warning: "marp_respond" event is intend for internal use only, so no description and documentation is provided
 	_, source_mIP, source_physical = event.pull(mARP.localSettings.requestTimeout, "marp_respond")
@@ -87,6 +86,10 @@ function mARP.sendRespond(mIP, physical)
 	modem.send(physical, 13, 2, ser.serialize(mARP.formRespondPacket()))
 
 	mARP.addTableEntry(mIP, physical)
+	return
+end
+
+-- Function onPacketReceive
 	return
 end
 
@@ -130,7 +133,6 @@ function mARP.addTableEntry(mIP, physical)
 	if not mARP.table[mIP] then
 		mARP.table[mIP] = physical
 	end
-
 	-- Timestamps via computer.uptime()
 	mARP.table.timestamps[mIP] = computer.uptime()
 end
@@ -156,12 +158,16 @@ function mARP.getTableEntry(address, sendRequest)
 		return mARP.getTableEntry(address)
 	end
 
+		-- Our record is expired, so we have to send the request again, but only if method caller allowed us to do it
+		if sendRequest then mARP.sendRequest(address) end
+
+		return mARP.getTableEntry(address)
+	end
 	-- If we didn't found address, let's seek it and return the result
 	if not foundAddress and sendRequest then
 		mARP.sendRequest(address)
 		mARP.getTableEntry(address)
 	end
-
 	return foundAddress
 end
 
@@ -187,5 +193,4 @@ mARP.localSettings = {
 	-- Timeout of mARP request in seconds
 	requestTimeout = require("OCNS.utils").confman.config.mARP.requestTimeout
 }
-
 return mARP

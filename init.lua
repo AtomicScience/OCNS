@@ -42,6 +42,17 @@ function OCNS.decapsulateToDataLink(interface, switchInteface,  version, payload
 end
 -- Function decapsulateToNetworkLayer (yes, I'm the fan of long method names)
 -- Is called from data link layer
+
+OCNS.pingStub = require("OCNS.pingStub")
+OCNS.mNSP = require("OCNS.mNSP")
+
+OCNS.networkProtocols = {OCNS.mIP, OCNS.mARP}
+OCNS.transportProtocols = {OCNS.mUDP}
+OCNS.sessionProtocols = {OCNS.mNSP}
+
+-- Function decapsulateToNetworkLayer (yes, I'm the fan of long method names)
+-- Is called when "modem_message" is triggered. Detects a network protocol and calls "onPacketReceive" method of it
+
 -- ===
 -- Arguments:
 -- Many-many-many arguments that are passed directly from "modem_message" event
