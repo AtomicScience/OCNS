@@ -38,7 +38,7 @@ end
 -- interface - interface that received the message
 -- packet (table) - unserialized packet
 function mDIX.onPacketReceive(interface, packet)
-	
+
 end
 
 return mDIX

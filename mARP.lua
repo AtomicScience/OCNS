@@ -4,22 +4,6 @@ local computer = require("computer")
 local ser = require("serialization")
 local event = require("event")
 
-<<<<<<< HEAD
--- mARP v2
--- This protocol is responsible for seeking hardware sockets of known mIP adresses holders
---
--- Packets structure:
--- Request:
--- +----+----------+---------------+-----------+
--- |Type|Source mIP|Destination mIP|Source port|
--- +----+----------+---------------+-----------+
--- Type is 0
--- ===
--- Reply
--- +----+----------+-----------------------+-----------+
--- |Type|Source mIP|Source physical address|Source port|
--- +----+----------+-----------------------+-----------+
-=======
 -- mARP v1
 -- This protocol is responsible for seeking physical addresses of known mIP adresses holders
 --
@@ -33,41 +17,26 @@ local event = require("event")
 -- +----+----------+-----------------------+
 -- |Type|Source mIP|Source physical address|
 -- +----+----------+-----------------------+
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
 -- Type is 1
 
 local mARP = {
 	-- Protocol name
 	name = "mARP",
 	-- Protocol version
-<<<<<<< HEAD
-	version = 2,
-	-- Protocol header version. Is used in packet header
-	headerVersion = 7
-=======
 	version = 1,
 	-- Protocol header version. Is used in packet header
 	headerVersion = 2
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
 }
 
 -- Function formRequestPacket
 -- Makes a mARP request packet, ready to be transferred via modem.send
 -- ===
 -- Arguments:
-<<<<<<< HEAD
--- localInterface - address you want too seek
--- sourceAddress (mARP address) - address of the sender. If not provided, your address will be attached to the package
--- Returns:
--- Packet (table), ready to be transferred via modem.send
-function mARP.formRequestPacket(localInterface, destinationAddress)
-=======
 -- destinationAddress (mARP address) - address you want too seek
 -- sourceAddress (mARP address) - address of the sender. If not provided, your address will be attached to the package
 -- Returns:
 -- Packet (table), ready to be transferred via modem.send
 function mARP.formRequestPacket(destinationAddress)
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
 	-- Make a table out of our arguments and return it
 	return {0, mIP.localSettings.address, destinationAddress}
 end
@@ -83,15 +52,7 @@ end
 function mARP.formRespondPacket()
 	-- Make a table out of our arguments and return it
 	return {1, mIP.localSettings.address, modem.address}
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 end
 
 -- Function sendRequest
@@ -104,21 +65,8 @@ end
 function mARP.sendRequest(address)
 	-- Broadcasting an mARP request
 	modem.broadcast(13, 2, ser.serialize(mARP.formRequestPacket(address)))
-<<<<<<< HEAD
-<<<<<<< HEAD
-
 	-- Avaiting for respond paying attention to request timeout
 	-- Warning: "marp_respond" event is intend for internal use only, so no description and documentation is provided
-=======
-	
-	-- Avaiting for respond paying attention to request timeout
-	-- Warning: "marp_respond" event is intend for internal use only, so no description and documentation is provided 
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-
-	-- Avaiting for respond paying attention to request timeout
-	-- Warning: "marp_respond" event is intend for internal use only, so no description and documentation is provided
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	_, source_mIP, source_physical = event.pull(mARP.localSettings.requestTimeout, "marp_respond")
 	if not source_mIP then
 		return false
@@ -138,24 +86,14 @@ function mARP.sendRespond(mIP, physical)
 	modem.send(physical, 13, 2, ser.serialize(mARP.formRespondPacket()))
 
 	mARP.addTableEntry(mIP, physical)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	return
 end
 
 -- Function onPacketReceive
-=======
-	return 
-end
-
--- Function onPacketReceive  
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
 	return
 end
 
 -- Function onPacketReceive
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 -- It's required function for every protocol object
 -- In case of network layer protocols, function's called from network driver (98_network.lua in /boot)
 -- ===
@@ -168,15 +106,7 @@ function mARP.onPacketReceive(address, packet)
 	-- packet[2] - source mIP address
 	-- packet[3] - destination mIP address
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 	-- Firstly we have to check packet's type (0 is request, 1 is
-=======
-	-- Firstly we have to check packet's type (0 is request, 1 is 
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-	-- Firstly we have to check packet's type (0 is request, 1 is
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	if packet[1] == 0 then
 		-- It's ARP request! Now we should compare our address with address in request
 		if packet[3] == mIP.localSettings.address then
@@ -184,21 +114,9 @@ function mARP.onPacketReceive(address, packet)
 			mARP.sendRespond(packet[2], address)
 		end
 	elseif packet[1] == 1 then
-<<<<<<< HEAD
-<<<<<<< HEAD
 		-- It's mARP respond!
 		-- Probably, I've should have had to add here some measures to avoid mARP-spoofing, but, to be honest, I don't care :)
 		-- Warning: "marp_respond" event is intended for internal use only, so no description and documentation is provided
-=======
-		-- It's mARP respond! 
-		-- Probably, I've should have had to add here some measures to avoid mARP-spoofing, but, to be honest, I don't care :)
-		-- Warning: "marp_respond" event is intended for internal use only, so no description and documentation is provided 
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-		-- It's mARP respond!
-		-- Probably, I've should have had to add here some measures to avoid mARP-spoofing, but, to be honest, I don't care :)
-		-- Warning: "marp_respond" event is intended for internal use only, so no description and documentation is provided
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 		event.push("marp_respond", packet[2], address)
 	else
 		error("Wrong ARP packet!")
@@ -215,15 +133,6 @@ function mARP.addTableEntry(mIP, physical)
 	if not mARP.table[mIP] then
 		mARP.table[mIP] = physical
 	end
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
-	
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	-- Timestamps via computer.uptime()
 	mARP.table.timestamps[mIP] = computer.uptime()
 end
@@ -237,21 +146,11 @@ end
 function mARP.getTableEntry(address, sendRequest)
 	foundAddress = mARP.table[address]
 	timestamp = mARP.table.timestamps[address]
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	-- If there is corresponding entry ('if timestamp' checks whether there if entry is represented) and it's expired, we should delete it
 	if timestamp and (computer.uptime() - timestamp > mARP.localSettings.recordTimeout) then
 		mARP.table[address] = nil
 		mARP.table.timestamps[address] = nil
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 		-- Our record is expired, so we have to send the request again, but only if method caller allowed us to do it
 		if sendRequest then mARP.sendRequest(address) end
@@ -259,36 +158,16 @@ function mARP.getTableEntry(address, sendRequest)
 		return mARP.getTableEntry(address)
 	end
 
-=======
-		
-=======
-
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 		-- Our record is expired, so we have to send the request again, but only if method caller allowed us to do it
 		if sendRequest then mARP.sendRequest(address) end
 
 		return mARP.getTableEntry(address)
 	end
-<<<<<<< HEAD
-	
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	-- If we didn't found address, let's seek it and return the result
 	if not foundAddress and sendRequest then
 		mARP.sendRequest(address)
 		mARP.getTableEntry(address)
 	end
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
-	
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	return foundAddress
 end
 
@@ -314,13 +193,4 @@ mARP.localSettings = {
 	-- Timeout of mARP request in seconds
 	requestTimeout = require("OCNS.utils").confman.config.mARP.requestTimeout
 }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
 return mARP
-=======
-return mARP
->>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
-=======
-return mARP
->>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
