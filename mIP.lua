@@ -164,12 +164,17 @@ end
 function mIP.onPacketReceive(address, packet)
 	-- Packet contents:
 <<<<<<< HEAD
+<<<<<<< HEAD
 	-- packet[1] - source mIP (remote address)
 	-- packet[2] - destination mIP (local address)
 =======
 	-- packet[1] - source mIP (local address)
 	-- packet[2] - destination mIP (remote address)
 >>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
+=======
+	-- packet[1] - source mIP (remote address)
+	-- packet[2] - destination mIP (local address)
+>>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	-- packet[3] - transport layer protocol header version
 	-- packet[4] - serialized payload
 
@@ -185,11 +190,17 @@ function mIP.onPacketReceive(address, packet)
 	end
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	-- Adding or refreshing a mARP table record
 	require("OCNS").mARP.addTableEntry(packet[1], address)
 
 =======
 >>>>>>> 6911efd71e8a862643a07bb7b7b8cb3be4867ae2
+=======
+	-- Adding or refreshing a mARP table record
+	require("OCNS").mARP.addTableEntry(packet[1], address)
+
+>>>>>>> f5b141e30ca25d95613874d9d0c174ff3d3e6f7b
 	--require("OCNS").utils.writeDelayToFile("/home/debug.log", "mIP.onPacketReceive")
 	require("OCNS").decapsulateToTransport(packet[1], mIP, packet[3], ser.unserialize(packet[4]))
 end
